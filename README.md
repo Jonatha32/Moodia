@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo-moodia.png" alt="Moodia Logo" width="200" />
+  <img src="https://github.com/Jonatha32/Moodia/blob/clean-main/images/WhatsApp%20Image%202025-07-25%20at%2016.45-Photoroom%20(2).png?raw=true" alt="Moodia Logo" width="200" />
   <h1>Moodia</h1>
   <p><em>La red social que humaniza la interacción digital</em></p>
   
