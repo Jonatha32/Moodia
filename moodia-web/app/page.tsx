@@ -62,6 +62,8 @@ function HomeContent() {
     // Si no hay mood seleccionado, redirigir al onboarding
     if (!moodLoading && !currentMood) {
       router.push('/onboarding');
+    } else if (!moodLoading && currentMood) {
+      router.push('/home');
     }
   }, [currentMood, moodLoading, router]);
 

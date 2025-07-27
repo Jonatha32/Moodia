@@ -28,3 +28,17 @@ h1, h2, h3, h4, h5, h6 {
 .btn-secondary {
   @apply bg-neutral-light text-neutral-dark px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:bg-neutral-medium;
 }
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

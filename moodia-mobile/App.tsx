@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import MoodSelector from './src/components/MoodSelector';
-import PostCard from './src/components/PostCard';
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { MoodProvider, useMood } from './src/contexts/MoodContext';
+import Login from './src/components/auth/Login';
+import Signup from './src/components/auth/Signup';
+import MoodSelectorNew from './src/components/MoodSelectorNew';
+import Feed from './src/components/Feed';
 import { Mood, Post, Reaction } from './src/types';
 
 // Mock data para el MVP
@@ -44,17 +48,15 @@ const mockPosts: Post[] = [
   },
 ];
 
-export default function App() {
-  const [currentMood, setCurrentMood] = useState<Mood | null>(null);
+function AppContent() {
+  const { user, loading: authLoading } = useAuth();
+  const { currentMood, loading: moodLoading } = useMood();
+  const [isLogin, setIsLogin] = useState(true);
   const [posts, setPosts] = useState<Post[]>(mockPosts);
-  const [currentUserId] = useState('user1'); // Mock user ID
-
-  const filteredPosts = currentMood 
-    ? posts.filter(post => post.mood === currentMood)
-    : posts;
+  const currentUserId = user?.uid || 'user1';
 
   const handleMoodSelect = (mood: Mood) => {
-    setCurrentMood(mood);
+    // El mood ya se maneja en el MoodContext
   };
 
   const handleReaction = (postId: string, reaction: Reaction) => {
@@ -81,11 +83,35 @@ export default function App() {
     console.log('Guardando post:', postId);
   };
 
+  if (authLoading || moodLoading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <StatusBar style="light" />
+        <View style={styles.loadingContent}>
+          <Text style={styles.loadingText}>Cargando Moodia...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="light" />
+        {isLogin ? (
+          <Login onToggleMode={() => setIsLogin(false)} />
+        ) : (
+          <Signup onToggleMode={() => setIsLogin(true)} />
+        )}
+      </SafeAreaView>
+    );
+  }
+
   if (!currentMood) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar style="auto" />
-        <MoodSelector onMoodSelect={handleMoodSelect} />
+        <StatusBar style="light" />
+        <MoodSelectorNew onMoodSelect={handleMoodSelect} />
       </SafeAreaView>
     );
   }
@@ -93,44 +119,23 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Moodia</Text>
-        <View style={styles.moodInfo}>
-          <Text style={styles.moodLabel}>Mood actual: </Text>
-          <Text style={styles.moodValue}>{currentMood}</Text>
-          <TouchableOpacity onPress={() => setCurrentMood(null)}>
-            <Text style={styles.changeButton}>Cambiar</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Feed */}
-      <ScrollView style={styles.feed} contentContainerStyle={styles.feedContent}>
-        {filteredPosts.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={{ fontSize: 48, marginBottom: 16 }}>🌟</Text>
-            <Text style={styles.emptyText}>
-              No hay publicaciones para tu mood actual
-            </Text>
-            <Text style={styles.emptySubtext}>
-              ¡Sé el primero en compartir!
-            </Text>
-          </View>
-        ) : (
-          filteredPosts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              currentUserId={currentUserId}
-              onReaction={handleReaction}
-              onSave={handleSave}
-            />
-          ))
-        )}
-      </ScrollView>
+      <Feed 
+        posts={posts}
+        onReaction={handleReaction}
+        onSave={handleSave}
+        currentUserId={currentUserId}
+      />
     </SafeAreaView>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MoodProvider>
+        <AppContent />
+      </MoodProvider>
+    </AuthProvider>
   );
 }
 
@@ -139,69 +144,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FAFAFA',
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F5',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1E1E2F',
-    marginBottom: 8,
-  },
-  moodInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  moodLabel: {
-    fontSize: 14,
-    color: '#4A4A6A',
-  },
-  moodValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E1E2F',
-    textTransform: 'capitalize',
-    marginRight: 12,
-    backgroundColor: '#F0F0F5',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  changeButton: {
-    fontSize: 14,
-    color: '#7B5BFF',
-    fontWeight: '600',
-  },
-  feed: {
+  loadingContainer: {
     flex: 1,
+    backgroundColor: '#7B5BFF',
   },
-  feedContent: {
-    padding: 16,
-  },
-  emptyState: {
+  loadingContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 80,
   },
-  emptyText: {
+  loadingText: {
     fontSize: 18,
-    color: '#4A4A6A',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  emptySubtext: {
-    fontSize: 16,
-    color: '#7B5BFF',
+    color: 'white',
     fontWeight: '600',
   },
 });
