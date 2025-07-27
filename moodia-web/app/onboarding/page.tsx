@@ -18,10 +18,8 @@ export default function OnboardingPage() {
   }, [user, loading, router]);
 
   const handleMoodSelect = (mood: Mood) => {
-    // Guardar el mood seleccionado y redirigir al feed principal
-    localStorage.setItem('currentMood', mood);
-    localStorage.setItem('moodSelectedDate', new Date().toDateString());
-    router.push('/');
+    // El mood ya se guarda en el MoodContext, solo redirigir
+    router.push('/home');
   };
 
   if (loading) {

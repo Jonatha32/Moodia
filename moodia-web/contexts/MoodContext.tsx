@@ -99,8 +99,10 @@ export function MoodProvider({ children }: { children: ReactNode }) {
       setMoodHistory(prev => [moodData, ...prev.slice(0, 6)]);
       
       // Guardar en localStorage para acceso rápido
-      localStorage.setItem('currentMood', mood);
-      localStorage.setItem('moodSelectedDate', today);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentMood', mood);
+        localStorage.setItem('moodSelectedDate', today);
+      }
       
     } catch (error) {
       console.error('Error saving mood:', error);
@@ -113,6 +115,7 @@ export function MoodProvider({ children }: { children: ReactNode }) {
 
   const canChangeMood = () => {
     // Permitir cambiar mood una vez por día
+    if (typeof window === 'undefined') return true;
     const today = new Date().toDateString();
     const savedDate = localStorage.getItem('moodSelectedDate');
     return savedDate !== today;
