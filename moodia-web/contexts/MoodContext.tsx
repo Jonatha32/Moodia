@@ -1,9 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
-import { db } from '@/lib/firebase';
+import { moodService } from '@/lib/firebaseService';
 import { Mood } from '@/types';
 
 interface MoodData {
@@ -65,12 +64,10 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     try {
-      const today = new Date().toDateString();
-      const moodDoc = await getDoc(doc(db, 'userMoods', `${user.uid}_${today}`));
+      const moodData = await moodService.getUserMood(user.uid);
       
-      if (moodDoc.exists()) {
-        const data = moodDoc.data() as MoodData;
-        setCurrentMood(data.mood);
+      if (moodData) {
+        setCurrentMood(moodData.mood);
       }
       
       setLoading(false);
@@ -84,24 +81,20 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     try {
-      const now = new Date();
-      const today = now.toDateString();
-      
-      const moodData: MoodData = {
-        mood,
-        selectedAt: now,
-        userId: user.uid
-      };
-
-      await setDoc(doc(db, 'userMoods', `${user.uid}_${today}`), moodData);
+      await moodService.setUserMood(mood);
       
       setCurrentMood(mood);
+      const moodData: MoodData = {
+        mood,
+        selectedAt: new Date(),
+        userId: user.uid
+      };
       setMoodHistory(prev => [moodData, ...prev.slice(0, 6)]);
       
       // Guardar en localStorage para acceso rápido
       if (typeof window !== 'undefined') {
         localStorage.setItem('currentMood', mood);
-        localStorage.setItem('moodSelectedDate', today);
+        localStorage.setItem('moodSelectedDate', new Date().toDateString());
       }
       
     } catch (error) {

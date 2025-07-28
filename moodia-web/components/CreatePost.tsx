@@ -1,213 +1,245 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Camera, X } from 'lucide-react';
-import { Mood } from '@/types';
-
-const moodOptions = [
-  { mood: 'focus' as Mood, emoji: '🎯', label: 'Focus' },
-  { mood: 'creative' as Mood, emoji: '🌈', label: 'Creativo' },
-  { mood: 'explorer' as Mood, emoji: '🔍', label: 'Explorador' },
-  { mood: 'reflective' as Mood, emoji: '💭', label: 'Reflexivo' },
-  { mood: 'chill' as Mood, emoji: '😎', label: 'Chill' },
-  { mood: 'relax' as Mood, emoji: '😴', label: 'Relax' },
-  { mood: 'motivated' as Mood, emoji: '🔥', label: 'Motivado' },
-];
+import { motion, AnimatePresence } from 'framer-motion';
+import { useMood } from '@/contexts/MoodContext';
+import { postService } from '@/lib/firebaseService';
+import { X, Camera, Image, Type, Smile } from 'lucide-react';
 
 interface CreatePostProps {
-  currentMood: Mood;
-  onSubmit: (postData: {
-    title: string;
-    description: string;
-    mood: Mood;
-    context?: string;
-    image?: File;
-  }) => void;
   onClose: () => void;
+  onPost: (post: any) => void;
 }
 
-export default function CreatePost({ currentMood, onSubmit, onClose }: CreatePostProps) {
+export default function CreatePost({ onClose, onPost }: CreatePostProps) {
+  const { currentMood, getMoodColor } = useMood();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedMood, setSelectedMood] = useState<Mood>(currentMood);
   const [context, setContext] = useState('');
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target?.result as string);
-      reader.readAsDataURL(file);
+  const moodEmojis = {
+    focus: '🎯',
+    creative: '🌈',
+    explorer: '🔍',
+    reflective: '💭',
+    chill: '😎',
+    relax: '😴',
+    motivated: '🔥'
+  };
+
+  const handlePost = async () => {
+    if (!title.trim() || !description.trim() || !currentMood) return;
+
+    try {
+      const postData = {
+        title: title.trim(),
+        description: description.trim(),
+        context: context.trim(),
+        mood: currentMood,
+        image: selectedImageFile
+      };
+
+      const newPost = await postService.createPost(postData);
+      onPost(newPost);
+      onClose();
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Error al crear la publicación');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !description.trim()) return;
-
-    onSubmit({
-      title: title.trim(),
-      description: description.trim(),
-      mood: selectedMood,
-      context: context.trim() || undefined,
-      image: image || undefined,
-    });
-
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setContext('');
-    setImage(null);
-    setImagePreview(null);
-  };
+  const mockImages = [
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&h=600&fit=crop'
+  ];
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-3xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-neutral-navy">Compartir proceso</h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-neutral-light rounded-full transition-colors"
-            >
-              <X className="w-5 h-5 text-neutral-dark" />
-            </button>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Nueva publicación</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Current Mood */}
+        {currentMood && (
+          <div 
+            className="flex items-center gap-3 p-4 rounded-2xl mb-6 border-2"
+            style={{ 
+              backgroundColor: `${getMoodColor(currentMood)}15`,
+              borderColor: `${getMoodColor(currentMood)}30`
+            }}
+          >
+            <span className="text-2xl">{moodEmojis[currentMood]}</span>
+            <div>
+              <p className="font-semibold text-gray-800 capitalize">
+                Mood: {currentMood}
+              </p>
+              <p className="text-sm text-gray-600">
+                Tu publicación reflejará este mood
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Title */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Título de tu proceso
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="¿Qué estás viviendo hoy?"
+            className="w-full p-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            maxLength={100}
+          />
+          <p className="text-xs text-gray-500 mt-1">{title.length}/100</p>
+        </div>
+
+        {/* Description */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Describe tu experiencia
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Comparte los detalles de tu proceso, lo que sentiste, aprendiste o experimentaste..."
+            className="w-full p-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+            rows={4}
+            maxLength={500}
+          />
+          <p className="text-xs text-gray-500 mt-1">{description.length}/500</p>
+        </div>
+
+        {/* Context */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            ¿Por qué compartes esto? (opcional)
+          </label>
+          <textarea
+            value={context}
+            onChange={(e) => setContext(e.target.value)}
+            placeholder="Explica tu motivación para compartir esta experiencia..."
+            className="w-full p-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+            rows={2}
+            maxLength={200}
+          />
+          <p className="text-xs text-gray-500 mt-1">{context.length}/200</p>
+        </div>
+
+        {/* Image Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            Agregar imagen (opcional)
+          </label>
+          
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {mockImages.map((image, index) => (
+              <motion.button
+                key={index}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setSelectedImage(selectedImage === image ? null : image);
+                  setSelectedImageFile(null);
+                }}
+                className={`aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
+                  selectedImage === image
+                    ? 'border-purple-500 ring-2 ring-purple-200'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <img
+                  src={image}
+                  alt={`Opción ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </motion.button>
+            ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-neutral-navy mb-3">
-                Mood
-              </label>
-              <div className="flex flex-wrap gap-3">
-                {moodOptions.map((option) => (
-                  <button
-                    key={option.mood}
-                    type="button"
-                    onClick={() => setSelectedMood(option.mood)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                      selectedMood === option.mood
-                        ? 'bg-gradient-primary text-white shadow-md'
-                        : 'bg-neutral-light text-neutral-dark hover:bg-neutral-medium hover:shadow-sm'
-                    }`}
-                  >
-                    <span>{option.emoji}</span>
-                    <span>{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="flex gap-2">
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setSelectedImageFile(file);
+                  setSelectedImage(URL.createObjectURL(file));
+                }
+              }}
+              className="hidden"
+              id="camera-input"
+            />
+            <label htmlFor="camera-input" className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-colors text-sm cursor-pointer">
+              <Camera className="w-4 h-4" />
+              Cámara
+            </label>
+            
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setSelectedImageFile(file);
+                  setSelectedImage(URL.createObjectURL(file));
+                }
+              }}
+              className="hidden"
+              id="gallery-input"
+            />
+            <label htmlFor="gallery-input" className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-colors text-sm cursor-pointer">
+              <Image className="w-4 h-4" />
+              Galería
+            </label>
+          </div>
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Título *
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="¿Qué proceso querés compartir?"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Descripción *
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Contanos sobre tu proceso..."
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                ¿Por qué compartís esto? (opcional)
-              </label>
-              <textarea
-                value={context}
-                onChange={(e) => setContext(e.target.value)}
-                rows={2}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Contexto emocional..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Imagen (opcional)
-              </label>
-              <div className="flex items-center space-x-4">
-                <label className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                  <Camera className="w-4 h-4" />
-                  <span>Subir imagen</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                </label>
-                {imagePreview && (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-16 h-16 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImage(null);
-                        setImagePreview(null);
-                      }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                    >
-                      ×
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-4 pt-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-secondary"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={!title.trim() || !description.trim()}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                Publicar
-              </button>
-            </div>
-          </form>
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-2xl font-semibold text-gray-700 transition-colors"
+          >
+            Cancelar
+          </button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handlePost}
+            disabled={!title.trim() || !description.trim()}
+            className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Publicar
+          </motion.button>
         </div>
       </motion.div>
     </motion.div>
