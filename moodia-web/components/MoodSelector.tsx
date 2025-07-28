@@ -81,6 +81,7 @@ export default function MoodSelector({ onMoodSelect }: MoodSelectorProps) {
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [backgroundGradient, setBackgroundGradient] = useState('linear-gradient(135deg, #7B5BFF 0%, #FF5E9C 50%, #FFAB5E 100%)');
   const [isAnimating, setIsAnimating] = useState(false);
+  const [hoveredMood, setHoveredMood] = useState<Mood | null>(null);
   const { selectMood } = useMood();
 
   const getCurrentGreeting = () => {
@@ -143,7 +144,7 @@ export default function MoodSelector({ onMoodSelect }: MoodSelectorProps) {
         </motion.div>
 
         {/* Mood Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-6">
           {moodOptions.map((option, index) => (
             <motion.button
               key={option.mood}
@@ -156,33 +157,53 @@ export default function MoodSelector({ onMoodSelect }: MoodSelectorProps) {
                 stiffness: 100
               }}
               whileHover={{ 
-                scale: selectedMood === option.mood ? 1 : 1.08,
-                y: -8,
-                transition: { duration: 0.2 }
+                scale: selectedMood === option.mood ? 1 : 1.12,
+                y: -12,
+                rotateY: 5,
+                transition: { duration: 0.3, type: "spring", stiffness: 300 }
               }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.92 }}
+              onHoverStart={() => setHoveredMood(option.mood)}
+              onHoverEnd={() => setHoveredMood(null)}
               onClick={() => handleMoodSelect(option.mood)}
               disabled={isAnimating}
-              className={`relative group p-8 rounded-3xl transition-all duration-500 ${
+              className={`relative group p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl transition-all duration-500 cursor-pointer ${
                 selectedMood === option.mood
-                  ? 'bg-white/30 backdrop-blur-md border-2 border-white/50 shadow-2xl'
-                  : 'bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:border-white/40'
+                  ? 'bg-white/40 backdrop-blur-lg border-2 border-white/60 shadow-2xl'
+                  : 'bg-white/15 backdrop-blur-md border border-white/30 hover:bg-white/25 hover:border-white/50'
               } ${isAnimating && selectedMood !== option.mood ? 'opacity-40' : ''}`}
             >
               {/* Emoji */}
-              <div className="text-5xl md:text-6xl mb-4 transform transition-transform group-hover:scale-110">
+              <motion.div 
+                className="text-4xl md:text-5xl lg:text-6xl mb-3 md:mb-4"
+                animate={{
+                  scale: hoveredMood === option.mood ? 1.2 : 1,
+                  rotate: hoveredMood === option.mood ? [0, -10, 10, 0] : 0
+                }}
+                transition={{ duration: 0.3 }}
+              >
                 {option.emoji}
-              </div>
+              </motion.div>
               
               {/* Label */}
-              <div className="font-bold text-white text-lg md:text-xl mb-2">
+              <motion.div 
+                className="font-bold text-white text-base md:text-lg lg:text-xl mb-2"
+                animate={{
+                  color: hoveredMood === option.mood ? '#ffffff' : 'rgba(255,255,255,0.9)'
+                }}
+              >
                 {option.label}
-              </div>
+              </motion.div>
               
               {/* Description */}
-              <div className="text-white/70 text-sm leading-tight">
+              <motion.div 
+                className="text-white/70 text-xs md:text-sm leading-tight text-center"
+                animate={{
+                  opacity: hoveredMood === option.mood ? 1 : 0.7
+                }}
+              >
                 {option.description}
-              </div>
+              </motion.div>
 
               {/* Selection Indicator */}
               <AnimatePresence>
@@ -201,14 +222,35 @@ export default function MoodSelector({ onMoodSelect }: MoodSelectorProps) {
               </AnimatePresence>
 
               {/* Glow Effect */}
+              {(selectedMood === option.mood || hoveredMood === option.mood) && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ 
+                    opacity: selectedMood === option.mood ? 0.8 : 0.4, 
+                    scale: 1 
+                  }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="absolute inset-0 rounded-2xl md:rounded-3xl -z-10"
+                  style={{
+                    background: `radial-gradient(circle at center, ${option.color}30 0%, ${option.color}10 70%, transparent 100%)`,
+                    boxShadow: `0 0 40px ${option.color}50, inset 0 0 20px ${option.color}20`
+                  }}
+                />
+              )}
+              
+              {/* Pulse Animation for Selected */}
               {selectedMood === option.mood && (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="absolute inset-0 rounded-3xl"
-                  style={{
-                    background: `linear-gradient(135deg, ${option.color}20 0%, ${option.color}10 100%)`,
-                    boxShadow: `0 0 30px ${option.color}40`
+                  className="absolute inset-0 rounded-2xl md:rounded-3xl border-2"
+                  style={{ borderColor: option.color }}
+                  animate={{
+                    scale: [1, 1.05, 1],
+                    opacity: [0.5, 0.8, 0.5]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
                   }}
                 />
               )}
