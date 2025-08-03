@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useMood } from '../contexts/MoodContext';
-import CreatePostForm from '../components/CreatePostForm';
 import { getPosts } from '../services/postService';
 import { Post } from '../types';
 import PostCard from '../components/PostCard';
+import SearchBar from '../components/SearchBar';
+import MoodSelector from '../components/MoodSelector';
+import FloatingActionButton from '../components/FloatingActionButton';
+import CreatePostModal from '../components/CreatePostModal';
 import { moods } from '../config/moods';
 
 const Home: React.FC = () => {
@@ -12,6 +15,8 @@ const Home: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const { selectedMood } = useMood();
   const [loadingPosts, setLoadingPosts] = useState(true);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setLoadingPosts(true);
@@ -24,43 +29,82 @@ const Home: React.FC = () => {
     return () => unsubscribe();
   }, [selectedMood]);
 
+  const filteredPosts = posts.filter(post => 
+    searchQuery === '' || 
+    post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    post.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const currentMood = moods.find(m => m.id === selectedMood);
+
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <img src="/logo.png" alt="Moodia Logo" className="w-16 h-16 mx-auto mb-4" />
-        <h1 className="text-4xl font-poppins font-bold text-neutral-text mb-4">
-          ¡Hola, {currentUser?.displayName || currentUser?.email || 'Moodier'}! 👋
-        </h1>
-        <p className="text-lg text-neutral-secondary">
-          ¿Cómo te sentís hoy?
-        </p>
+    <div className="min-h-screen bg-neutral-bg">
+      {/* Top Search Bar - Sticky */}
+      <div className="sticky top-16 z-20 bg-white bg-opacity-95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+        <div className="max-w-md mx-auto px-4 py-3">
+          <SearchBar onSearch={setSearchQuery} />
+        </div>
       </div>
 
-      <CreatePostForm />
-
-      <div className="bg-white rounded-2xl p-8 shadow-sm">
-        <h2 className="text-2xl font-poppins font-bold text-neutral-navy mb-6">
-          {selectedMood ? `Feed de ${moods.find(m => m.id === selectedMood)?.name}` : 'Feed General'}
-        </h2>
-        {loadingPosts 
-          ? (<p className="text-center text-gray-500">Cargando posts...</p>) 
-          : posts.length > 0 
-            ? (
-                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                  {posts.map((post) => (
-                    <PostCard key={post.id} post={post} />
-                  ))}
-                </div>
-              ) 
-            : (
-                <div className="text-center py-12 text-gray-500">
-                  <div className="text-6xl mb-4">📝</div>
-                  <p className="text-lg">Aún no hay publicaciones para este mood.</p>
-                  <p className="text-sm">¡Sé el primero en compartir tu proceso!</p>
-                </div>
-              )
-        }
+      {/* Feed Vertical - Estilo Instagram/TikTok */}
+      <div className="max-w-md mx-auto">
+        {loadingPosts ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-12 h-12 border-4 border-primary-purple border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-neutral-secondary font-lato text-sm">Cargando posts...</p>
+          </div>
+        ) : filteredPosts.length > 0 ? (
+          <div className="space-y-0">
+            {filteredPosts.map((post, index) => (
+              <div 
+                key={post.id} 
+                className="bg-white border-b border-gray-100 animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <PostCard post={post} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 px-4">
+            <div className="text-6xl mb-4">
+              {searchQuery ? '🔍' : (currentMood?.emoji || '🎆')}
+            </div>
+            <h3 className="text-xl font-poppins font-bold text-neutral-text mb-3">
+              {searchQuery 
+                ? 'No encontramos resultados' 
+                : `Aún no hay posts de ${currentMood?.name || 'este mood'}`
+              }
+            </h3>
+            <p className="text-neutral-secondary font-lato text-sm mb-6">
+              {searchQuery 
+                ? 'Intenta con otras palabras' 
+                : '¡Sé el primero en compartir!'
+              }
+            </p>
+            {!searchQuery && (
+              <button
+                onClick={() => setCreateModalOpen(true)}
+                className="gradient-primary text-white px-6 py-3 rounded-xl font-poppins font-semibold shadow-primary hover:scale-105 transition-transform duration-200 text-sm"
+              >
+                Crear post 🚀
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Mood Selector Flotante */}
+      <MoodSelector />
+      
+      {/* Floating Action Button */}
+      <FloatingActionButton onClick={() => setCreateModalOpen(true)} />
+
+      {/* Create Post Modal */}
+      <CreatePostModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setCreateModalOpen(false)} 
+      />
     </div>
   );
 };
