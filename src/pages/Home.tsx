@@ -8,6 +8,7 @@ import SearchBar from '../components/SearchBar';
 import MoodSelector from '../components/MoodSelector';
 import FloatingActionButton from '../components/FloatingActionButton';
 import CreatePostModal from '../components/CreatePostModal';
+import PostDetailModal from '../components/PostDetailModal';
 import { moods } from '../config/moods';
 
 const Home: React.FC = () => {
@@ -17,6 +18,9 @@ const Home: React.FC = () => {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchBarVisible, setSearchBarVisibility] = useState(true);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
 
   useEffect(() => {
     setLoadingPosts(true);
@@ -40,8 +44,8 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-neutral-bg">
       {/* Top Search Bar - Sticky */}
-      <div className="sticky top-16 z-20 bg-white bg-opacity-95 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div className="max-w-md mx-auto px-4 py-3">
+      <div className="sticky top-0 z-20 bg-white bg-opacity-95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+        <div className="max-w-md mx-auto px-4 py-3 ">
           <SearchBar onSearch={setSearchQuery} />
         </div>
       </div>
@@ -61,7 +65,13 @@ const Home: React.FC = () => {
                 className="bg-white border-b border-gray-100 animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <PostCard post={post} />
+                <PostCard 
+                  post={post} 
+                  onPostClick={(post) => {
+                    setSelectedPost(post);
+                    setIsPostDetailOpen(true);
+                  }}
+                />
               </div>
             ))}
           </div>
@@ -104,6 +114,16 @@ const Home: React.FC = () => {
       <CreatePostModal 
         isOpen={isCreateModalOpen} 
         onClose={() => setCreateModalOpen(false)} 
+      />
+      
+      {/* Post Detail Modal */}
+      <PostDetailModal 
+        post={selectedPost}
+        isOpen={isPostDetailOpen}
+        onClose={() => {
+          setIsPostDetailOpen(false);
+          setSelectedPost(null);
+        }}
       />
     </div>
   );

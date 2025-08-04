@@ -85,3 +85,79 @@ export const toggleReaction = async (postId: string, reactionType: string, userI
 
   return updateDoc(postRef, updatePayload);
 };
+
+/**
+ * Marca o desmarca un post como destacado.
+ * @param postId El ID del post.
+ * @param isHighlighted Si el post debe estar destacado o no.
+ */
+export const toggleHighlightPost = async (postId: string, isHighlighted: boolean) => {
+  const postRef = doc(db, 'posts', postId);
+  return updateDoc(postRef, { isHighlighted });
+};
+
+/**
+ * Obtiene los posts destacados de un usuario.
+ * @param userId El ID del usuario.
+ * @param callback Función que se ejecuta cada vez que los datos cambian.
+ * @returns Una función para cancelar la suscripción.
+ */
+export const getHighlightedPostsByUserId = (userId: string, callback: (posts: Post[]) => void) => {
+  const q = query(
+    postsCollectionRef, 
+    where('userId', '==', userId), 
+    where('isHighlighted', '==', true),
+    orderBy('createdAt', 'desc')
+  );
+
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const posts = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    } as Post));
+    callback(posts);
+  });
+
+  return unsubscribe;
+};
+
+/**
+ * Agrega un comentario a un post
+ */
+export const addComment = async (postId: string, userId: string, text: string) => {
+  const commentData = {
+    postId,
+    userId,
+    text,
+    createdAt: serverTimestamp()
+  };
+  
+  const commentRef = await addDoc(collection(db, 'comments'), commentData);
+  
+  // Actualizar contador de comentarios
+  const postRef = doc(db, 'posts', postId);
+  const postSnap = await getDoc(postRef);
+  const currentCount = postSnap.data()?.commentsCount || 0;
+  await updateDoc(postRef, { commentsCount: currentCount + 1 });
+  
+  return commentRef;
+};
+
+/**
+ * Obtiene comentarios de un post
+ */
+export const getPostComments = (postId: string, callback: (comments: any[]) => void) => {
+  const q = query(
+    collection(db, 'comments'),
+    where('postId', '==', postId),
+    orderBy('createdAt', 'desc')
+  );
+  
+  return onSnapshot(q, (querySnapshot) => {
+    const comments = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    callback(comments);
+  });
+};
