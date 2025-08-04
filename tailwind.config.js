@@ -22,7 +22,7 @@ export default {
         },
         mood: {
           happy: '#FFE066',
-          sad: '#6C91BF',
+          sad: '#6C91BF', 
           anxious: '#FFB5B5',
           creative: '#A29BFE',
           motivated: '#55EFC4',
@@ -31,6 +31,7 @@ export default {
           relax: '#E8E8E8',
           explorer: '#00C897',
           reflective: '#9B5DE5',
+          love: '#FF69B4',
         },
         'bg-mood-happy': '#FFE066',
         'bg-mood-sad': '#6C91BF',
@@ -45,7 +46,7 @@ export default {
       },
       fontFamily: {
         'poppins': ['Poppins', 'sans-serif'],
-        'inter': ['Inter', 'sans-serif'],
+        'inter': ['Inter', 'sans-serif'], 
         'montserrat': ['Montserrat', 'sans-serif'],
         'lato': ['Lato', 'sans-serif'],
       },
@@ -66,6 +67,9 @@ export default {
       animation: {
         'fade-in': 'fade-in 0.8s ease-out',
         'stagger': 'fade-in 0.6s ease-out',
+        'mood-fade': 'mood-fade 0.5s ease-in-out',
+        'card-hover': 'card-hover 0.3s ease-out',
+        'view-transition': 'view-transition 0.4s ease-in-out',
       },
       keyframes: {
         'fade-in': {
@@ -78,6 +82,22 @@ export default {
             transform: 'translateY(0)',
           },
         },
+        'mood-fade': {
+          '0%': { opacity: '0', transform: 'scale(0.8)' },
+          '50%': { opacity: '0.5', transform: 'scale(1.1)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'card-hover': {
+          '0%': { transform: 'translateY(0) scale(1)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' },
+          '100%': { transform: 'translateY(-8px) scale(1.02)', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' },
+        },
+        'view-transition': {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      borderWidth: {
+        '3': '3px',
       },
     },
   },

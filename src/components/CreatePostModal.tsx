@@ -20,6 +20,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState('');
 
   const selectedMoodObj = moods.find(m => m.id === postMood);
 
@@ -43,9 +44,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
     try {
       let imageUrl = '';
       if (imageFile) {
+        setUploadProgress('Subiendo imagen...');
         imageUrl = await uploadImageToCloudinary(imageFile);
+        setUploadProgress('Imagen subida ✓');
       }
 
+      setUploadProgress('Creando post...');
       await createPost({
         title,
         description,
@@ -54,14 +58,21 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
         imageUrl: imageUrl || undefined,
       });
 
+      setUploadProgress('¡Post creado exitosamente! 🎉');
+      
       // Reset form
-      setTitle('');
-      setDescription('');
-      setImageFile(null);
-      setImagePreview(null);
-      onClose();
+      setTimeout(() => {
+        setTitle('');
+        setDescription('');
+        setImageFile(null);
+        setImagePreview(null);
+        setUploadProgress('');
+        onClose();
+      }, 1000);
     } catch (err) {
-      setError('Error al crear el post');
+      console.error('Error al crear post:', err);
+      setError('Error al crear el post. Verifica tu conexión e intenta de nuevo.');
+      setUploadProgress('');
     } finally {
       setIsUploading(false);
     }
@@ -133,53 +144,67 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
           {/* Mood Selector */}
           <div>
             <label className="block text-sm font-medium text-neutral-text font-lato mb-3">
-              ¿Cuál es tu mood ahora?
+              🎭 ¿Cuál es tu mood ahora?
             </label>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               {moods.map((mood) => (
                 <button
                   key={mood.id}
                   type="button"
                   onClick={() => setPostMood(mood.id)}
-                  className={`p-3 rounded-xl transition-all duration-200 flex flex-col items-center gap-1 ${
+                  className={`p-4 rounded-xl transition-all duration-300 flex flex-col items-center gap-2 hover:scale-105 ${
                     postMood === mood.id
-                      ? `${mood.color} text-white ${mood.shadow} scale-105`
-                      : 'bg-gray-50 text-neutral-text hover:bg-gray-100'
+                      ? `${mood.color} text-white ${mood.shadow} scale-105 ring-2 ring-white ring-offset-2`
+                      : 'bg-gray-50 text-neutral-text hover:bg-gray-100 hover:shadow-md'
                   }`}
                 >
-                  <span className="text-2xl">{mood.emoji}</span>
-                  <span className="text-xs font-poppins font-medium">{mood.name}</span>
+                  <span className="text-3xl animate-mood-fade">{mood.emoji}</span>
+                  <span className="text-xs font-montserrat font-semibold text-center">{mood.name}</span>
                 </button>
               ))}
             </div>
+            {postMood && (
+              <div className="mt-4 p-3 bg-gradient-to-r from-primary-purple to-primary-coral rounded-xl text-white text-center">
+                <p className="font-lato text-sm">
+                  ✨ Perfecto! Vas a compartir tu mood <strong>{moods.find(m => m.id === postMood)?.name}</strong>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-neutral-text font-lato mb-3">
-              Agregar imagen (opcional)
+              📷 Agregar imagen (opcional)
             </label>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-primary-purple transition-colors">
+            <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-primary-purple transition-all duration-300 hover:bg-gray-50">
               {imagePreview ? (
-                <div className="relative">
-                  <img src={imagePreview} alt="Preview" className="max-h-48 mx-auto rounded-lg" />
+                <div className="relative group">
+                  <img src={imagePreview} alt="Preview" className="max-h-48 mx-auto rounded-lg shadow-lg" />
                   <button
                     type="button"
                     onClick={() => {
                       setImageFile(null);
                       setImagePreview(null);
                     }}
-                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg opacity-0 group-hover:opacity-100"
                   >
                     ×
                   </button>
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                    <p className="text-white font-lato text-sm opacity-0 group-hover:opacity-100 transition-opacity">Haz clic para cambiar</p>
+                  </div>
                 </div>
               ) : (
-                <div>
-                  <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="text-neutral-secondary font-lato">Arrastra una imagen o haz clic para seleccionar</p>
+                <div className="py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-primary-purple to-primary-coral rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-neutral-text font-lato font-medium mb-2">Arrastra una imagen aquí</p>
+                  <p className="text-neutral-secondary font-lato text-sm">o haz clic para seleccionar desde tu dispositivo</p>
+                  <p className="text-xs text-neutral-secondary mt-2">PNG, JPG hasta 10MB</p>
                 </div>
               )}
               <input
@@ -204,7 +229,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) =>
             {isUploading ? (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Compartiendo...
+                {uploadProgress || 'Compartiendo...'}
               </div>
             ) : (
               `Compartir mi ${selectedMoodObj?.name.toLowerCase() || 'mood'} 🚀`
