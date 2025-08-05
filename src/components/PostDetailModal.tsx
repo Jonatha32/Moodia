@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Post, UserProfile } from '../types';
 import { getUserProfile } from '../services/userService';
-import { toggleReaction, addComment, getPostComments } from '../services/postService';
+import { toggleReaction, addComment, getPostComments, deleteComment } from '../services/postService';
 import { useAuth } from '../contexts/AuthContext';
 import { moods } from '../config/moods';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -159,42 +159,72 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, isOpen, onClose
 
           {/* Comments */}
           <div className="flex-1 overflow-y-auto p-4">
-            <h4 className="font-poppins font-bold text-neutral-text mb-3">
+            <h4 className="font-poppins font-bold text-neutral-text dark:text-white mb-3">
               Comentarios ({comments.length})
             </h4>
             <div className="space-y-3">
-              {comments.map((comment) => (
-                <CommentItem key={comment.id} comment={comment} />
-              ))}
+              {comments.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-2">💬</div>
+                  <p className="text-neutral-secondary dark:text-gray-400 text-sm">Sé el primero en comentar</p>
+                </div>
+              ) : (
+                comments.map((comment) => (
+                  <CommentItem 
+                    key={comment.id} 
+                    comment={comment} 
+                    currentUserId={currentUser?.uid}
+                    postAuthorId={currentPost?.userId}
+                  />
+                ))
+              )}
             </div>
           </div>
 
           {/* Add Comment */}
-          <form onSubmit={handleAddComment} className="p-4 border-t border-gray-100">
+          <form onSubmit={handleAddComment} className="p-4 border-t border-gray-100 dark:border-gray-700">
             <div className="flex gap-2">
               <img
                 src={currentUser?.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${currentUser?.displayName}`}
                 alt="Tu avatar"
-                className="w-8 h-8 rounded-full"
+                className="w-8 h-8 rounded-full border border-gray-200"
               />
-              <div className="flex-1">
+              <div className="flex-1 relative">
                 <input
                   type="text"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Escribe un comentario..."
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-purple text-sm"
+                  className="w-full px-3 py-2 pr-12 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-purple focus:border-transparent text-sm bg-white dark:bg-gray-700 text-neutral-text dark:text-white placeholder-neutral-secondary dark:placeholder-gray-400 transition-all"
                   disabled={isSubmitting}
+                  maxLength={500}
                 />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-neutral-secondary dark:text-gray-400">
+                  {newComment.length}/500
+                </div>
               </div>
               <button
                 type="submit"
-                disabled={!newComment.trim() || isSubmitting}
-                className="px-4 py-2 bg-primary-purple text-white rounded-xl hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                disabled={!newComment.trim() || isSubmitting || newComment.length > 500}
+                className="px-4 py-2 bg-primary-purple text-white rounded-xl hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm font-medium shadow-sm"
               >
-                {isSubmitting ? '...' : 'Enviar'}
+                {isSubmitting ? (
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>...</span>
+                  </div>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                )}
               </button>
             </div>
+            {newComment.length > 450 && (
+              <p className="text-xs text-orange-500 mt-1 ml-10">
+                {500 - newComment.length} caracteres restantes
+              </p>
+            )}
           </form>
         </div>
       </div>
@@ -202,8 +232,16 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, isOpen, onClose
   );
 };
 
-const CommentItem: React.FC<{ comment: any }> = ({ comment }) => {
+interface CommentItemProps {
+  comment: any;
+  currentUserId?: string;
+  postAuthorId?: string;
+}
+
+const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUserId, postAuthorId }) => {
   const [author, setAuthor] = useState<UserProfile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
 
   useEffect(() => {
     const fetchAuthor = async () => {
@@ -213,28 +251,99 @@ const CommentItem: React.FC<{ comment: any }> = ({ comment }) => {
     fetchAuthor();
   }, [comment.userId]);
 
-  if (!author) return null;
+  const handleDelete = async () => {
+    if (!currentUserId || isDeleting) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteComment(comment.id, comment.postId);
+    } catch (error) {
+      console.error('Error al eliminar comentario:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const canDelete = currentUserId && (currentUserId === comment.userId || currentUserId === postAuthorId);
+  const isAuthor = comment.userId === postAuthorId;
+
+  if (!author) {
+    return (
+      <div className="flex gap-2 animate-pulse">
+        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+        <div className="flex-1">
+          <div className="bg-gray-100 rounded-xl p-3">
+            <div className="h-3 bg-gray-200 rounded w-20 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-full"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 group">
       <img
         src={author.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${author.displayName}`}
         alt={author.displayName || 'Avatar'}
-        className="w-8 h-8 rounded-full"
+        className="w-8 h-8 rounded-full border border-gray-200"
       />
       <div className="flex-1">
-        <div className="bg-gray-50 rounded-xl p-3">
-          <p className="font-montserrat font-bold text-xs text-neutral-text">{author.displayName}</p>
-          <p className="text-sm text-neutral-text mt-1">{comment.text}</p>
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 relative">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <p className="font-montserrat font-bold text-xs text-neutral-text dark:text-white">
+                {author.displayName}
+              </p>
+              {isAuthor && (
+                <span className="bg-primary-purple text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                  Autor
+                </span>
+              )}
+            </div>
+            
+            {canDelete && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowOptions(!showOptions)}
+                  className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center transition-all"
+                >
+                  <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                  </svg>
+                </button>
+                
+                {showOptions && (
+                  <div className="absolute right-0 top-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-10">
+                    <button
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <p className="text-sm text-neutral-text dark:text-gray-200 leading-relaxed">{comment.text}</p>
         </div>
-        <p className="text-xs text-neutral-secondary mt-1 ml-3">
-          {comment.createdAt?.toDate?.().toLocaleDateString('es-ES', { 
-            month: 'short', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
-        </p>
+        
+        <div className="flex items-center gap-4 mt-1 ml-3">
+          <p className="text-xs text-neutral-secondary dark:text-gray-400">
+            {comment.createdAt?.toDate?.().toLocaleDateString('es-ES', { 
+              month: 'short', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
+        </div>
       </div>
     </div>
   );

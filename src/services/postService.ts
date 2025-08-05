@@ -54,13 +54,19 @@ export const getPosts = (callback: (posts: Post[]) => void, mood?: string) => {
  * @returns Una función para cancelar la suscripción.
  */
 export const getPostsByUserId = (userId: string, callback: (posts: Post[]) => void) => {
+  console.log('getPostsByUserId called with userId:', userId);
   const q = query(postsCollectionRef, where('userId', '==', userId), orderBy('createdAt', 'desc'));
 
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    const posts = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    } as Post));
+    console.log('Posts found for user:', querySnapshot.docs.length);
+    const posts = querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      console.log('Post data:', { id: doc.id, userId: data.userId, title: data.title });
+      return {
+        id: doc.id,
+        ...data,
+      } as Post;
+    });
     callback(posts);
   });
 

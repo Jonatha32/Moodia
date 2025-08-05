@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SettingsDropdownProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ const SettingsDropdown: React.FC<SettingsDropdownProps> = ({ isOpen, onClose, bu
   const { logOut } = useAuth();
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDarkMode, toggleDarkMode } = useTheme();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -44,45 +45,42 @@ const SettingsDropdown: React.FC<SettingsDropdownProps> = ({ isOpen, onClose, bu
     }
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
-  };
+
 
   if (!isOpen) return null;
 
   return (
     <div 
       ref={dropdownRef}
-      className="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-fade-in"
+      className="absolute right-0 top-12 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-50 animate-fade-in"
     >
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100">
-        <h3 className="font-poppins font-bold text-neutral-text text-sm">Configuración</h3>
+        <h3 className="font-poppins font-bold text-neutral-text dark:text-white text-sm">Configuración</h3>
       </div>
 
       {/* Menu Items */}
       <div className="py-2">
         {/* Configuración de la App */}
-        <button className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3">
+          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
             </svg>
           </div>
           <div>
-            <p className="font-lato font-medium text-neutral-text text-sm">Configuración</p>
-            <p className="font-lato text-xs text-neutral-secondary">Personaliza tu experiencia</p>
+            <p className="font-lato font-medium text-neutral-text dark:text-white text-sm">Configuración</p>
+            <p className="font-lato text-xs text-neutral-secondary dark:text-gray-400">Personaliza tu experiencia</p>
           </div>
         </button>
 
         {/* Dark Mode */}
         <button 
           onClick={toggleDarkMode}
-          className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3"
+          className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3"
         >
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${darkMode ? 'bg-gray-800' : 'bg-yellow-100'}`}>
-            {darkMode ? (
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-800' : 'bg-yellow-100'}`}>
+            {isDarkMode ? (
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
@@ -93,11 +91,11 @@ const SettingsDropdown: React.FC<SettingsDropdownProps> = ({ isOpen, onClose, bu
             )}
           </div>
           <div>
-            <p className="font-lato font-medium text-neutral-text text-sm">
-              {darkMode ? 'Modo Claro' : 'Modo Oscuro'}
+            <p className="font-lato font-medium text-neutral-text dark:text-white text-sm">
+              {isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}
             </p>
-            <p className="font-lato text-xs text-neutral-secondary">
-              {darkMode ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+            <p className="font-lato text-xs text-neutral-secondary dark:text-gray-400">
+              {isDarkMode ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
             </p>
           </div>
         </button>

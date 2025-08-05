@@ -45,16 +45,19 @@ const ProfilePage: React.FC = () => {
       return;
     }
 
+    console.log('ProfilePage - userId from params:', userId);
     let unsubscribe = () => {};
 
     const fetchAllData = async () => {
       setLoading(true);
       setError(null);
       try {
+        console.log('Fetching profile for userId:', userId);
         const profile = await getUserProfile(userId);
         if (!profile) {
           setError('Perfil no encontrado.');
         } else {
+          console.log('Profile found:', profile.displayName);
           setUserProfile(profile);
           
           // Cargar estadísticas
@@ -69,7 +72,9 @@ const ProfilePage: React.FC = () => {
             setIsFollowingUser(following);
           }
           
+          console.log('Calling getPostsByUserId with:', userId);
           unsubscribe = getPostsByUserId(userId, (posts) => {
+            console.log('Posts received in ProfilePage:', posts.length);
             setUserPosts(posts);
           });
           

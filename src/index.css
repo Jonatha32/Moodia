@@ -5,12 +5,12 @@
 @layer base {
   body {
     font-family: 'Lato', 'Inter', sans-serif;
-    background-color: #FAFAFA;
-    color: #2D2D2D;
+    @apply bg-neutral-bg dark:bg-gray-900 text-neutral-text dark:text-white;
   }
   
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', 'Montserrat', sans-serif;
+    @apply text-neutral-text dark:text-white;
   }
 
   .gradient-primary {

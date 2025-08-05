@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -19,6 +20,13 @@ export default {
           text: '#2D2D2D',
           secondary: '#6C6C6C',
           light: '#EAEAEA',
+        },
+        dark: {
+          bg: '#1A1A1D',
+          card: '#2D2D30',
+          text: '#FFFFFF',
+          secondary: '#B0B0B0',
+          border: '#404040',
         },
         mood: {
           happy: '#FFE066',

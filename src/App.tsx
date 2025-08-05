@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext'; // Importa el componente correcto
 import { MoodProvider, useMood } from './contexts/MoodContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute'; // Importa el componente correcto
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
@@ -71,13 +72,15 @@ const AppRoutes: React.FC = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <MoodProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
-      </MoodProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <MoodProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </MoodProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

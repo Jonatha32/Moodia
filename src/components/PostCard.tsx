@@ -25,7 +25,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostClick }) => {
 
   useEffect(() => {
     const fetchAuthor = async () => {
+      console.log('PostCard - Fetching author for post.userId:', post.userId);
       const userProfile = await getUserProfile(post.userId);
+      console.log('PostCard - Author found:', userProfile?.displayName, 'uid:', userProfile?.uid);
       setAuthor(userProfile);
     };
     fetchAuthor();

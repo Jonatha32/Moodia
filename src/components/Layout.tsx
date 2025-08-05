@@ -19,8 +19,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
 
   return (
-    <div className="min-h-screen bg-neutral-bg">
-      <header className="bg-white shadow-sm border-b border-gray-100">
+    <div className="min-h-screen bg-neutral-bg dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-100 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center gap-2">

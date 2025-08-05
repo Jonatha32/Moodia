@@ -38,15 +38,15 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-bg">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-3xl shadow-primary border border-gray-100">
+    <div className="min-h-screen flex items-center justify-center gradient-bg dark:bg-gray-900">
+      <div className="max-w-md w-full space-y-8 p-10 bg-white dark:bg-gray-800 rounded-3xl shadow-primary border border-gray-100 dark:border-gray-700">
         {/* Logo animado */}
         <div className="text-center mb-8">
           <img src="/logo.png" alt="Moodia Logo" className="w-20 h-20 mx-auto mb-6 animate-pulse" />
-          <h2 className="text-4xl font-poppins font-bold text-neutral-text mb-2">
+          <h2 className="text-4xl font-poppins font-bold text-neutral-text dark:text-white mb-2">
             Welcome back
           </h2>
-          <p className="text-neutral-secondary font-lato font-light">
+          <p className="text-neutral-secondary dark:text-gray-400 font-lato font-light">
             Another day, another mood. Let's share it.
           </p>
         </div>
@@ -59,7 +59,7 @@ const LoginPage: React.FC = () => {
           )}
           
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-neutral-text font-lato">
+            <label htmlFor="email" className="block text-sm font-medium text-neutral-text dark:text-white font-lato">
               Email
             </label>
             <input

@@ -27,11 +27,11 @@ const Home: React.FC = () => {
     const unsubscribe = getPosts((fetchedPosts) => {
       setPosts(fetchedPosts);
       setLoadingPosts(false);
-    }, selectedMood);
+    }); // Removido selectedMood para mostrar todos los posts
 
-    // Limpia la suscripción cuando el componente se desmonta o el mood cambia
+    // Limpia la suscripción cuando el componente se desmonta
     return () => unsubscribe();
-  }, [selectedMood]);
+  }, []); // Removido selectedMood de las dependencias
 
   const filteredPosts = posts.filter(post => 
     searchQuery === '' || 
@@ -42,9 +42,9 @@ const Home: React.FC = () => {
   const currentMood = moods.find(m => m.id === selectedMood);
 
   return (
-    <div className="min-h-screen bg-neutral-bg">
+    <div className="min-h-screen bg-neutral-bg dark:bg-gray-900">
       {/* Top Search Bar - Sticky */}
-      <div className="sticky top-0 z-20 bg-white bg-opacity-95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+      <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 bg-opacity-95 dark:bg-opacity-95 backdrop-blur-md border-b border-gray-100 dark:border-gray-700 shadow-sm">
         <div className="max-w-md mx-auto px-4 py-3 ">
           <SearchBar onSearch={setSearchQuery} />
         </div>
@@ -62,7 +62,7 @@ const Home: React.FC = () => {
             {filteredPosts.map((post, index) => (
               <div 
                 key={post.id} 
-                className="bg-white border-b border-gray-100 animate-fade-in"
+                className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <PostCard 
@@ -78,12 +78,12 @@ const Home: React.FC = () => {
         ) : (
           <div className="text-center py-20 px-4">
             <div className="text-6xl mb-4">
-              {searchQuery ? '🔍' : (currentMood?.emoji || '🎆')}
+              {searchQuery ? '🔍' : '📝'}
             </div>
             <h3 className="text-xl font-poppins font-bold text-neutral-text mb-3">
               {searchQuery 
                 ? 'No encontramos resultados' 
-                : `Aún no hay posts de ${currentMood?.name || 'este mood'}`
+                : 'Aún no hay posts'
               }
             </h3>
             <p className="text-neutral-secondary font-lato text-sm mb-6">
